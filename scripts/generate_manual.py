@@ -113,8 +113,6 @@ def build():
     # ===== 二 =====
     pdf.add_page()
     pdf.h1('二、跑起来')
-    pdf.warn('面向零编程基础的同学，按步骤复制粘贴命令即可，不需要任何编程知识。')
-
     pdf.h2('第一步：安装 Python')
     pdf.p('检查是否已有 Python。按 Win+R，输入 cmd 回车，在黑色窗口输入：')
     pdf.cmd('python --version')
