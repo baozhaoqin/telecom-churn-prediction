@@ -43,7 +43,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     nan_count = df["TotalCharges"].isna().sum()
     if nan_count > 0:
         median_val = df["TotalCharges"].median()
-        df["TotalCharges"].fillna(median_val, inplace=True)
+        df["TotalCharges"] = df["TotalCharges"].fillna(median_val)
         print(f"[data] TotalCharges 缺失值 {nan_count} 个，已用中位数 {median_val:.2f} 填充")
 
     # 目标变量编码

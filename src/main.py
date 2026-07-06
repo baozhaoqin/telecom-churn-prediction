@@ -13,7 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.data import load_data, clean_data, get_summary
 from src.features import prepare_data
-from src.models import create_models, train_models, cross_validate, get_feature_importance
+from src.models import create_models, train_models, cross_validate, get_feature_importance, tune_models
+from src.tracking import log_experiment
 from src.evaluate import evaluate_all, evaluate_model
 from src.visualize import (
     plot_feature_importance,
@@ -51,7 +52,9 @@ def main():
     print(f"[main] 样本数: {summary['n_samples']}, 特征数: {summary['n_features']}")
     print(f"[main] 流失率: {summary['churn_rate']:.2%}")
 
-    # 3. 特征工程
+    # 3. 特征工程（含特征选择 + SMOTE）
+    feat_cfg = config.get("features", {})
+    imb_cfg = config.get("imbalance", {})
     X_train, X_val, X_test, y_train, y_val, y_test, feature_names, preprocessor = (
         prepare_data(
             df,
@@ -59,6 +62,10 @@ def main():
             test_size=config["model"]["test_size"],
             val_size=config["model"]["val_size"],
             random_state=seed,
+            selection_method=feat_cfg.get("selection_method", "none"),
+            correlation_threshold=feat_cfg.get("correlation_threshold", 0.8),
+            imbalance_method=imb_cfg.get("method", "none"),
+            sampling_strategy=imb_cfg.get("sampling_strategy", "auto"),
         )
     )
 
@@ -72,7 +79,29 @@ def main():
 
     model_results = train_models(models, X_train, y_train, X_val, y_val)
 
-    # 5. 交叉验证
+    # 4b. GridSearchCV 超参数调优（可选）
+    best_params = {}
+    gs_cfg = config.get("grid_search", {})
+    if gs_cfg.get("enabled", False):
+        tuning_results = tune_models(
+            X_train, y_train,
+            random_seed=seed,
+            cv=gs_cfg.get("cv", 3),
+            scoring=gs_cfg.get("scoring", "roc_auc"),
+            n_jobs=gs_cfg.get("n_jobs", -1),
+            verbose=gs_cfg.get("verbose", 1),
+        )
+        # 用调优后的模型替换
+        for name, t_result in tuning_results.items():
+            model_results[name] = {
+                "model": t_result["best_model"],
+                "train_score": t_result["best_model"].score(X_train, y_train),
+                "val_score": t_result["best_model"].score(X_val, y_val),
+            }
+            best_params[name] = t_result["best_params"]
+        print("\n[main] GridSearchCV 完成，已替换为最优模型")
+
+    # 5. 交叉验证（使用最终模型）
     cv_results = cross_validate(
         models, X_train, y_train, config["model"]["cv_folds"], seed
     )
@@ -143,6 +172,17 @@ def main():
     print(f"\n[main] CV 结果:")
     for name, cv in cv_results.items():
         print(f"  {name}: {cv['mean']:.4f} ± {cv['std']:.4f}")
+
+    # 9. 实验追踪
+    log_experiment(
+        config=config,
+        model_name=best_model_name,
+        metrics=best_metrics,
+        cv_results=cv_results,
+        best_params=best_params.get(best_model_name) if best_params else None,
+        notes="feature_selection + SMOTE + GridSearchCV",
+        output_path=str(results_dir / "experiments.csv"),
+    )
 
     return model_results, all_metrics, cv_results
 
