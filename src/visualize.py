@@ -14,16 +14,31 @@ from typing import Dict, Any, List
 
 
 def _setup_chinese_font():
-    """配置中文字体，确保中文标注正常显示"""
-    candidates = ["SimHei", "Microsoft YaHei", "STXihei", "STSong", "FangSong", "KaiTi"]
+    """配置中文字体，确保中文标注正常显示
+
+    优先级：系统字体 → 项目自带 Noto Sans SC
+    """
+    from pathlib import Path
+
+    # 1. 尝试系统自带中文字体
+    candidates = ["SimHei", "Microsoft YaHei", "STXihei", "STSong", "FangSong", "KaiTi",
+                  "Noto Sans SC", "Noto Sans CJK SC", "WenQuanYi Micro Hei",
+                  "PingFang SC", "Hiragino Sans GB", "Arial Unicode MS"]
     available = {f.name for f in fm.fontManager.ttflist}
-    chosen = None
     for font in candidates:
         if font in available:
-            chosen = font
-            break
-    if chosen:
-        plt.rcParams["font.family"] = chosen
+            plt.rcParams["font.family"] = font
+            plt.rcParams["axes.unicode_minus"] = False
+            return
+
+    # 2. 回退：加载项目自带字体
+    bundled_font = Path(__file__).resolve().parent.parent / "assets" / "fonts" / "NotoSansSC.ttf"
+    if bundled_font.exists():
+        fm.fontManager.addfont(str(bundled_font))
+        plt.rcParams["font.family"] = "Noto Sans SC"
+        plt.rcParams["axes.unicode_minus"] = False
+        return
+
     plt.rcParams["axes.unicode_minus"] = False
 
 

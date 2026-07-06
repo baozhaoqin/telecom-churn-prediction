@@ -17,12 +17,27 @@ warnings.filterwarnings("ignore")
 
 # 先设 seaborn 样式，再设中文字体（sns.set_style 会重置 font.family！）
 sns.set_style("whitegrid")
-candidates = ["SimHei", "Microsoft YaHei", "STXihei", "STSong", "FangSong", "KaiTi"]
-available = {f.name for f in fm.fontManager.ttflist}
+
+# 1. 尝试系统自带中文字体
+candidates = ["SimHei", "Microsoft YaHei", "STXihei", "STSong", "FangSong", "KaiTi",
+              "Noto Sans SC", "Noto Sans CJK SC", "WenQuanYi Micro Hei",
+              "PingFang SC", "Hiragino Sans GB", "Arial Unicode MS"]
+available_fonts = {f.name for f in fm.fontManager.ttflist}
+system_font = None
 for font in candidates:
-    if font in available:
-        plt.rcParams["font.family"] = font
+    if font in available_fonts:
+        system_font = font
         break
+
+if system_font:
+    plt.rcParams["font.family"] = system_font
+else:
+    # 2. 回退：加载项目自带 Noto Sans SC
+    bundled = Path(__file__).resolve().parent.parent / "assets" / "fonts" / "NotoSansSC.ttf"
+    if bundled.exists():
+        fm.fontManager.addfont(str(bundled))
+        plt.rcParams["font.family"] = "Noto Sans SC"
+
 plt.rcParams["axes.unicode_minus"] = False
 
 from src.data import load_data, clean_data
