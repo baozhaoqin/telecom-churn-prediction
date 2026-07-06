@@ -95,17 +95,18 @@ def generate_pdf():
     pdf.set_text_color(30, 60, 120)
     pdf.set_font("SimHei", "B", 10)
     pdf.set_x(18)
-    pdf.cell(174, 8, "  版本：基础跑通版本 v0.1  |  全流程可运行，模型调优与深度分析待后续迭代", fill=True)
+    pdf.cell(174, 8, "  版本：v0.2 改进版  |  EDA + SMOTE + GridSearchCV + 消融实验 + 46 单元测试", fill=True)
     pdf.ln(14)
     pdf.body(
         "本项目使用机器学习方法，基于电信客户的基本信息、消费行为和服务使用情况，"
         "预测客户是否存在流失风险。项目对比了三种常用算法（逻辑回归、随机森林、XGBoost），"
-        "并输出可视化图表帮助理解分析结果。"
+        "通过 SMOTE 处理数据不均衡，GridSearchCV 超参数调优，并输出可视化图表帮助理解分析结果。"
     )
     pdf.section_title("当前进度")
     pdf.body(
-        "数据获取 已完成 | 数据清洗 已完成 | 特征工程 已完成 | 模型训练 已完成 | 模型评估 已完成\n"
-        "模型调优 待做 | 深度分析 待做 | 论文撰写 待做"
+        "数据获取 已完成 | EDA 分析 已完成 | 数据清洗 已完成 | 特征工程 已完成\n"
+        "SMOTE 过采样 已完成 | GridSearchCV 调优 已完成 | 消融实验 已完成\n"
+        "单元测试 已完成 (46 tests) | 论文撰写 待做 | PPT 制作 待做"
     )
     pdf.section_title("数据集说明")
     pdf.body(
@@ -117,10 +118,12 @@ def generate_pdf():
     )
     pdf.section_title("你将得到什么")
     pdf.bullet("模型对比表：三种算法的准确率、召回率、F1 分数、AUC")
+    pdf.bullet("EDA 探索分析图：数据分布、类别特征流失率、相关性热力图")
     pdf.bullet("客户流失分布图（饼图）")
     pdf.bullet("特征重要性排序图（哪些因素最影响流失）")
     pdf.bullet("ROC 曲线对比图（模型性能可视化）")
     pdf.bullet("混淆矩阵图（预测正确/错误的数量分布）")
+    pdf.bullet("消融实验对比表（各模块贡献量化）")
 
     # ===== 第二章：环境准备 =====
     pdf.add_page()
@@ -177,6 +180,7 @@ def generate_pdf():
     pdf.code_block("pip install -r requirements.txt")
     pdf.body("等待安装完成（约 2-5 分钟，因网络速度而异）。看到 Successfully installed 即表示成功。")
     pdf.note_box('如果安装速度很慢，可以试试：pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple')
+    pdf.note_box('本项目已自带中文字体（assets/fonts/NotoSansSC.ttf），图表中文标注在 Windows/Mac/Linux 下均可正常显示，无需额外安装字体。')
 
     # ===== 第三章：运行项目 =====
     pdf.add_page()

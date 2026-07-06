@@ -45,6 +45,8 @@
 pip install -r requirements.txt
 ```
 
+> **跨平台字体**：项目捆绑了 Noto Sans SC 开源字体（`assets/fonts/`），中文标注在 Windows/Mac/Linux 下均可正常显示，无需额外安装字体。
+
 ### 2. 下载数据
 
 从 [Kaggle](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) 下载 `WA_Fn-UseC_-Telco-Customer-Churn.csv`，放入 `data/raw/` 目录。
