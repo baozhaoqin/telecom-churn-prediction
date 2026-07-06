@@ -37,3 +37,4 @@ Thumbs.db
 # Results (keep directory structure)
 results/*
 !results/.gitkeep
+.coverage

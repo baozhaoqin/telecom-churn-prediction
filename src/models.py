@@ -126,3 +126,80 @@ def get_feature_importance(model, feature_names: list) -> dict:
 
     sorted_idx = np.argsort(importances)[::-1]
     return {feature_names[i]: importances[i] for i in sorted_idx}
+
+
+# GridSearchCV 搜索空间定义
+PARAM_GRIDS = {
+    "LogisticRegression": {
+        "C": [0.01, 0.1, 1.0, 10.0],
+        "max_iter": [1000],
+        "class_weight": ["balanced", None],
+    },
+    "RandomForest": {
+        "n_estimators": [100, 200],
+        "max_depth": [5, 10, 15, None],
+        "min_samples_split": [2, 5, 10],
+        "class_weight": ["balanced", "balanced_subsample", None],
+    },
+    "XGBoost": {
+        "n_estimators": [100, 200],
+        "max_depth": [3, 6, 9],
+        "learning_rate": [0.01, 0.1, 0.2],
+        "subsample": [0.8, 1.0],
+        "scale_pos_weight": [1, 3],
+    },
+}
+
+
+def tune_models(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    random_seed: int,
+    cv: int = 3,
+    scoring: str = "roc_auc",
+    n_jobs: int = -1,
+    verbose: int = 1,
+) -> Dict:
+    """对三个模型执行 GridSearchCV 超参数搜索
+
+    Args:
+        X_train: 训练特征
+        y_train: 训练标签
+        random_seed: 随机种子
+        cv: 交叉验证折数
+        scoring: 评分指标
+        n_jobs: 并行数
+        verbose: 详细程度
+
+    Returns:
+        Dict: {model_name: {"best_model": ..., "best_params": ..., "best_score": ...}}
+    """
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.linear_model import LogisticRegression as LR
+    from sklearn.ensemble import RandomForestClassifier as RF
+    from xgboost import XGBClassifier as XGB
+
+    base_models = {
+        "LogisticRegression": (LR(random_state=random_seed), PARAM_GRIDS["LogisticRegression"]),
+        "RandomForest": (RF(random_state=random_seed, n_jobs=-1), PARAM_GRIDS["RandomForest"]),
+        "XGBoost": (XGB(random_state=random_seed, eval_metric="logloss"), PARAM_GRIDS["XGBoost"]),
+    }
+
+    tuning_results = {}
+    for name, (model, param_grid) in base_models.items():
+        print(f"\n[models] GridSearchCV: {name} ({len(param_grid)} 参数 × {cv} 折 = ...)")
+        gs = GridSearchCV(
+            model, param_grid, cv=cv, scoring=scoring,
+            n_jobs=n_jobs, verbose=verbose, refit=True,
+        )
+        gs.fit(X_train, y_train)
+
+        tuning_results[name] = {
+            "best_model": gs.best_estimator_,
+            "best_params": gs.best_params_,
+            "best_score": gs.best_score_,
+        }
+        print(f"[models] {name} 最佳 {scoring}: {gs.best_score_:.4f}")
+        print(f"[models] {name} 最佳参数: {gs.best_params_}")
+
+    return tuning_results

@@ -6,6 +6,20 @@ data:
   raw_path: "data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv"
   processed_path: "data/processed/"
 
+# 特征工程
+features:
+  # 特征选择: drop_low_importance | correlation | none
+  selection_method: "correlation"
+  # 相关性阈值，高于此值的特征对保留一个
+  correlation_threshold: 0.8
+
+# 样本不均衡处理
+imbalance:
+  # 处理方法: smote | class_weight | none
+  method: "smote"
+  # SMOTE 采样策略: auto(平衡) | 0.5(少数类占多数类的 50%)
+  sampling_strategy: "auto"
+
 # 模型参数
 model:
   test_size: 0.2
@@ -29,6 +43,14 @@ xgboost:
   max_depth: 6
   learning_rate: 0.1
   subsample: 0.8
+
+# GridSearchCV 搜索空间（为空则不调优）
+grid_search:
+  enabled: true
+  cv: 3
+  scoring: "roc_auc"
+  n_jobs: -1
+  verbose: 1
 
 # 可视化
 visualization:
